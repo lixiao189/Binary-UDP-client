@@ -19,7 +19,8 @@
 struct calcProtocol{
   uint16_t type;  // What message is this, 1 = server to client, 2 client to server, 3... reserved 
   uint16_t major_version; // 1
-  uint16_t minor_version; // 0 
+  uint16_t minor_version; // 0
+  uint32_t id; // Server side identification with operation. Client must return the same ID as it got from Server.
   uint32_t arith; // What operation to perform, see mapping below. 
   int32_t inValue1; // integer value 1
   int32_t inValue2; // integer value 2
@@ -31,9 +32,7 @@ struct calcProtocol{
 
   
 struct calcMessage {
-  //  1 - Server-to-client, Text,  2 - Server-to-client, Binary,
-  // 21 - Client-to-server, Test, 22 - Client-to-server, Binary.
-  uint16_t type;
+  uint16_t type;    // See below
   uint32_t message; // See below
   
   // Protocol, UDP = 17, TCP = 6, other values are reserved. 
@@ -59,8 +58,18 @@ other numbers are reserved
 */
 
 
-/* helloMessage.message 
+/* 
+   calcMessage.type
+   1 - server-to-client, text protocol
+   2 - server-to-client, binary protocol
+   3 - server-to-client, N/A
+   21 - client-to-server, text protocol
+   22 - client-to-server, binary protocol
+   23 - client-to-serve, N/A
+   
+   calcMessage.message 
 
+   0 = Not applicable/availible (N/A or NA)
    1 = OK   // Accept 
    2 = NOT OK  // Reject 
 
