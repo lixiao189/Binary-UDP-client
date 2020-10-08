@@ -16,7 +16,7 @@
    server->client,type should be set to 1, 
    client->server type = 2. 
  */
-struct calcProtocol{
+struct  __attribute__((__packed__)) calcProtocol{
   uint16_t type;  // What message is this, 1 = server to client, 2 client to server, 3... reserved , conversion needed (for practice)
   uint16_t major_version; // 1, conversion needed (for practice)
   uint16_t minor_version; // 0, conversion needed (for practice)
@@ -31,7 +31,7 @@ struct calcProtocol{
 };
 
   
-struct calcMessage {
+struct  __attribute__((__packed__)) calcMessage {
   uint16_t type;    // See below, conversion needed (for practice)
   uint32_t message; // See below, conversion needed (for practice)
   

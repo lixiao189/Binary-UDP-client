@@ -3,13 +3,13 @@ all: libcalc test client server
 
 
 
-servermain.o: servermain.cpp
+servermain.o: servermain.cpp protocol.h
 	$(CXX) -Wall -c servermain.cpp -I.
 
-clientmain.o: clientmain.cpp
+clientmain.o: clientmain.cpp protocol.h
 	$(CXX) -Wall -c clientmain.cpp -I.
 
-main.o: main.cpp
+main.o: main.cpp protocol.h
 	$(CXX) -Wall -c main.cpp -I.
 
 
