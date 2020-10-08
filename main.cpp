@@ -79,6 +79,8 @@ int main(int argc, char *argv[]){
   char *lineBuffer=NULL;
   size_t lenBuffer=0;
   ssize_t nread=0;
+
+
   printf("Print a command: ");
   nread=getline(&lineBuffer,&lenBuffer,stdin);
   
@@ -127,8 +129,12 @@ int main(int argc, char *argv[]){
   
 
   
-
+  
   free(lineBuffer); // This is needed for the getline() as it will allocate memory (if the provided buffer is NUL).
+
+
+  printf("sizeof(struct calcProtocol)  = %d \n",sizeof(struct calcProtocol));
+  printf("sizeof(struct calcMessage)  = %d \n",sizeof(struct calcMessage));
   
 
 }
