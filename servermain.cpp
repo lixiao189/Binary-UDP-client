@@ -23,7 +23,7 @@ int terminate=0;
 void checkJobbList(int signum){
   // As anybody can call the handler, its good coding to check the signal number that called it.
 
-  printf("Let me be, I want to sleep.\n");
+  printf("Let me be, I want to sleep, loopCount = %d.\n", loopCount);
 
   if(loopCount>20){
     printf("I had enough.\n");
@@ -55,6 +55,10 @@ int main(int argc, char *argv[]){
   signal(SIGALRM, checkJobbList);
   setitimer(ITIMER_REAL,&alarmTime,NULL); // Start/register the alarm. 
 
+#ifdef DEBUG
+  printf("DEBUGGER LINE ");
+#endif
+  
   
   while(terminate==0){
     printf("This is the main loop, %d time.\n",loopCount);

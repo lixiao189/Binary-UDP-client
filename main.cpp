@@ -25,6 +25,10 @@
 */
 int main(int argc, char *argv[]){
 
+
+  printf("calcProtocol = %d bytes\n",sizeof(struct calcProtocol));
+  printf("calcMessage = %d bytes\n",sizeof(struct calcMessage));
+  
   /* Initialize the library, this is needed for this library. */
   initCalcLib();
   char *ptr;
