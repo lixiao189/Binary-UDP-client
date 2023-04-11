@@ -35,7 +35,7 @@ calcLib.o: calcLib.c calcLib.h
 	gcc -Wall -fPIC -c calcLib.c
 
 libcalc: calcLib.o
-	ar -rc libcalc.a -o calcLib.o
+	ar -rc libcalc.a calcLib.o
 
 clean:
 	rm *.o *.a test server client

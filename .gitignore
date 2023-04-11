@@ -1,0 +1,7 @@
+*.a
+*.o
+
+test
+client
+server
+serverD
