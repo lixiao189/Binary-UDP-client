@@ -14,6 +14,8 @@
 
 #include "protocol.h"
 
+const int gMaxSendTimes = 3;
+
 /**
  * @brief Translate host to IP
  *
@@ -102,41 +104,88 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  // Send request
-  calcMessage reqMsg = {htons(22), htons(0), htons(17), htons(1), htons(0)};
-  if (send(sock, &reqMsg, sizeof(reqMsg), 0) < 0) {
-    printf("Send failed\n");
-    return -1;
-  }
+  // Set up fd sets
+  fd_set readfds;
+  FD_ZERO(&readfds);
+  FD_SET(sock, &readfds);
 
-  // Receive calculation protocol message
+  // Set up timeout struct
+  timeval timeout;
+  timeout.tv_sec = 2;
+  timeout.tv_usec = 0;
+
+  int send_cnt = 0;
   calcProtocol calcProtocolMsg;
-  memset(&calcProtocolMsg, 0, sizeof(calcProtocolMsg));
-  if (recv(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
-    printf("NOT OK\n");
-    return -1;
+  while (true) {
+    // send request message
+    calcMessage reqMsg = {htons(22), htons(0), htons(17), htons(1), htons(0)};
+    if (send(sock, &reqMsg, sizeof(reqMsg), 0) < 0) {
+      printf("Send failed\n");
+      return -1;
+    }
+    send_cnt++;
+
+    int n = select(sock + 1, &readfds, NULL, NULL, &timeout);
+
+    if (n < 0) {
+      puts("Select error");
+      return -1;
+    } else if (n == 0) {
+      if (send_cnt >= gMaxSendTimes) {
+        puts("Timeout error");
+        return -1;
+      }
+      continue;
+    } else {
+      // Receive calculation protocol message
+      memset(&calcProtocolMsg, 0, sizeof(calcProtocolMsg));
+      if (recv(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
+        // Version check
+        printf("NOT OK\n");
+        return -1;
+      }
+
+      break;
+    }
   }
 
   // Calculate the result
   calculate(&calcProtocolMsg);
 
-  // Send result
-  if (send(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
-    printf("Send failed\n");
-    return -1;
+  send_cnt = 0;
+  while (true) {
+    // Send result
+    if (send(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
+      printf("Send failed\n");
+      return -1;
+    }
+    send_cnt++;
+
+    int n = select(sock + 1, &readfds, NULL, NULL, &timeout);
+
+    if (n < 0) {
+      puts("Select error");
+      return -1;
+    } else if (n == 0) {
+      if (send_cnt >= gMaxSendTimes) {
+        puts("Timeout error");
+        return -1;
+      }
+      continue;
+    } else {
+      // Receive result message
+      calcMessage resMsg;
+      memset(&resMsg, 0, sizeof(resMsg));
+      if (recv(sock, &resMsg, sizeof(resMsg), 0) < 0 || ntohl(resMsg.message) != 1) {
+        printf("NOT OK\n");
+        return -1;
+      } else if (ntohl(resMsg.message) == 1) {
+        printf("OK\n");
+      }
+
+      break;
+    }
   }
 
-  std::cout << ntohl(calcProtocolMsg.arith) << std::endl;
-  std::cout << ntohl(calcProtocolMsg.inValue1) << " " << ntohl(calcProtocolMsg.inValue2) << " " << ntohl(calcProtocolMsg.inResult) << std::endl;
-  std::cout << calcProtocolMsg.flValue1 << " " << calcProtocolMsg.flValue2 << " " << calcProtocolMsg.flResult << std::endl;
-
-  // Receive result message
-  calcMessage resMsg;
-  memset(&resMsg, 0, sizeof(resMsg));
-  if (recv(sock, &resMsg, sizeof(resMsg), 0) < 0 || ntohl(resMsg.message) != 1) {
-    printf("NOT OK\n");
-    return -1;
-  } else if (ntohl(resMsg.message) == 1) {
-    printf("OK\n");
-  }
+  close(sock);
 }
