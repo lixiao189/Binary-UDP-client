@@ -14,6 +14,8 @@
 
 #include "protocol.h"
 
+#define DEBUG
+
 const int gMaxSendTimes = 3;
 
 /**
@@ -85,6 +87,8 @@ int main(int argc, char *argv[]) {
   char *host = strtok(argv[1], ":");
   int port = atoi(strtok(NULL, ":"));
 
+  printf("Host %s, and port %d.\n", host, port);
+
   // Create UDP socket
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0) {
@@ -103,6 +107,27 @@ int main(int argc, char *argv[]) {
     printf("Connection Failed\n");
     return -1;
   }
+
+#ifdef DEBUG
+  // Get the local IP and port
+  int trial_sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (connect(trial_sock, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
+    printf("Connection Failed\n");
+    return -1;
+  }
+
+  sockaddr_in local_addr;
+  socklen_t len = sizeof(local_addr);
+
+  getsockname(trial_sock, (struct sockaddr *)&local_addr, &len);
+
+  char *local_host = inet_ntoa(local_addr.sin_addr);
+  uint16_t local_port = ntohs(local_addr.sin_port);
+
+  printf("Connected to  %s:%d local %s:%d\n", host, port, local_host, local_port);
+  close(trial_sock);
+#endif
 
   // Set up fd sets
   fd_set readfds;
