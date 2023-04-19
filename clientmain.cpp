@@ -17,6 +17,7 @@
 #define DEBUG
 
 const int gMaxSendTimes = 3;
+const int LOCAL_PORT = 12345; // Local listening port
 
 /**
  * @brief Translate host to IP
@@ -102,12 +103,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  // Connect to server
-  if (connect(sock, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
-    printf("Connection Failed\n");
-    return -1;
-  }
-
 #ifdef DEBUG
   // Get the local IP and port
   int trial_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -117,17 +112,28 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  sockaddr_in local_addr;
-  socklen_t len = sizeof(local_addr);
+  sockaddr_in addr;
+  socklen_t len = sizeof(addr);
 
-  getsockname(trial_sock, (struct sockaddr *)&local_addr, &len);
+  getsockname(trial_sock, (struct sockaddr *)&addr, &len);
 
-  char *local_host = inet_ntoa(local_addr.sin_addr);
-  uint16_t local_port = ntohs(local_addr.sin_port);
+  char *local_host = inet_ntoa(addr.sin_addr);
+  uint16_t local_port = ntohs(addr.sin_port);
 
   printf("Connected to  %s:%d local %s:%d\n", host, port, local_host, local_port);
   close(trial_sock);
 #endif
+
+  // Bind the local address
+  struct sockaddr_in local_addr;
+  local_addr.sin_family = AF_INET;
+  local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  local_addr.sin_port = htons(LOCAL_PORT);
+
+  if (bind(sock, (struct sockaddr *)&local_addr, sizeof(local_addr)) == -1) { // 绑定本地地址和端口号
+    puts("Bind error");
+    return -1;
+  }
 
   // Set up fd sets
   fd_set readfds;
@@ -144,7 +150,7 @@ int main(int argc, char *argv[]) {
   while (true) {
     // send request message
     calcMessage reqMsg = {htons(22), htons(0), htons(17), htons(1), htons(0)};
-    if (send(sock, &reqMsg, sizeof(reqMsg), 0) < 0) {
+    if (sendto(sock, &reqMsg, sizeof(reqMsg), 0, (sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
       printf("Send failed\n");
       return -1;
     }
@@ -164,7 +170,8 @@ int main(int argc, char *argv[]) {
     } else {
       // Receive calculation protocol message
       memset(&calcProtocolMsg, 0, sizeof(calcProtocolMsg));
-      if (recv(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
+      socklen_t len = sizeof(*serv_addr);
+      if (recvfrom(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0, (sockaddr *)serv_addr, &len) < 0) {
         // Version check
         printf("NOT OK\n");
         return -1;
@@ -180,7 +187,7 @@ int main(int argc, char *argv[]) {
   send_cnt = 0;
   while (true) {
     // Send result
-    if (send(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0) < 0) {
+    if (sendto(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0, (sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
       printf("Send failed\n");
       return -1;
     }
@@ -201,7 +208,8 @@ int main(int argc, char *argv[]) {
       // Receive result message
       calcMessage resMsg;
       memset(&resMsg, 0, sizeof(resMsg));
-      if (recv(sock, &resMsg, sizeof(resMsg), 0) < 0 || ntohl(resMsg.message) != 1) {
+      socklen_t len = sizeof(*serv_addr);
+      if (recvfrom(sock, &resMsg, sizeof(resMsg), 0, (sockaddr *)serv_addr, &len) < 0 || ntohl(resMsg.message) != 1) {
         printf("NOT OK\n");
         return -1;
       } else if (ntohl(resMsg.message) == 1) {
