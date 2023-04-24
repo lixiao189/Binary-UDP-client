@@ -162,10 +162,13 @@ int main(int argc, char *argv[]) {
     } else {
       // Receive calculation protocol message
       memset(&calcProtocolMsg, 0, sizeof(calcProtocolMsg));
+      ssize_t recv_size = 0;
       socklen_t len = serv_addr->ai_addrlen;
-      if (recvfrom(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0, serv_addr->ai_addr, &len) < 0) {
-        // Version check
-        printf("NOT OK\n");
+      if ((recv_size = recvfrom(sock, &calcProtocolMsg, sizeof(calcProtocolMsg), 0, serv_addr->ai_addr, &len)) < 0) {
+        printf("Receive error\n");
+        return -1;
+      } else if (recv_size == sizeof(calcMessage) && ntohl(((calcMessage *)&calcProtocolMsg)->message) == 2) {
+        puts("NOT OK");
         return -1;
       }
 
