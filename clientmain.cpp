@@ -17,7 +17,20 @@
 #define DEBUG
 
 const int gMaxSendTimes = 3;
+const int BUF_SIZE = 100;
 const int LOCAL_PORT = 12345; // Local listening port
+
+void parse_ip_port(const char *str, char *host, int *port) {
+  const char *colon = strrchr(str, ':');
+  if (colon != NULL) {
+    int len = colon - str;
+    strncpy(host, str, len);
+    *(host + len) = '\0';
+    *port = atoi(colon + 1);
+  } else {
+    printf("Error: Invalid ip:port format\n");
+  }
+}
 
 /**
  * @brief Translate host to IP
@@ -85,8 +98,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Parse host and port
-  char *host = strtok(argv[1], ":");
-  int port = atoi(strtok(NULL, ":"));
+  char host[BUF_SIZE];
+  int port;
+  parse_ip_port(argv[1], host, &port);
 
   printf("Host %s, and port %d.\n", host, port);
 
