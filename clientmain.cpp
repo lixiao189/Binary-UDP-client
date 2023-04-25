@@ -61,6 +61,24 @@ addrinfo *host2addr(const char *host, const char *port) {
     return nullptr;
   }
 
+  // parse host to IP address string
+  char ipstr[INET6_ADDRSTRLEN];
+  void *addr;
+
+  // get the pointer to the address itself,
+  // different fields in IPv4 and IPv6:
+  if (res->ai_family == AF_INET) { // IPv4
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
+    addr = &(ipv4->sin_addr);
+  } else { // IPv6
+    struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)res->ai_addr;
+    addr = &(ipv6->sin6_addr);
+  }
+
+  // convert the IP to a string and print it:
+  inet_ntop(res->ai_family, addr, ipstr, sizeof ipstr);
+  printf("IP: %s\n", ipstr);
+
   return res;
 }
 
