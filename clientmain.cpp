@@ -109,6 +109,45 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+#ifdef DEBUG
+  int tmp_sock;
+  struct sockaddr_storage addr;
+  socklen_t addrlen = sizeof(addr);
+
+  if ((tmp_sock = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol)) < 0) {
+    printf("Socket creation error\n");
+    return -1;
+  }
+
+  if (connect(tmp_sock, serv_addr->ai_addr, serv_addr->ai_addrlen) < 0) {
+    puts("Connect error");
+    close(tmp_sock);
+    return -1;
+  }
+
+  if (getsockname(tmp_sock, (struct sockaddr *)&addr, &addrlen) < 0) {
+    perror("getsockname error");
+    exit(EXIT_FAILURE);
+  }
+
+  char local_ipstr[INET6_ADDRSTRLEN];
+  int local_port;
+
+  if (addr.ss_family == AF_INET) {
+    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+    local_port = ntohs(s->sin_port);
+    inet_ntop(AF_INET, &s->sin_addr, local_ipstr, sizeof(local_ipstr));
+  } else {
+    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&addr;
+    local_port = ntohs(s->sin6_port);
+    inet_ntop(AF_INET6, &s->sin6_addr, local_ipstr, sizeof(local_ipstr));
+  }
+
+  printf("Connected to  %s:%s local %s:%d\n", host, port, local_ipstr, local_port);
+
+  close(tmp_sock);
+#endif
+
   // Create UDP socket
   int sock = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol);
   if (sock < 0) {
