@@ -99,6 +99,8 @@ int main(int argc, char *argv[]) {
   // Parse host and port
   char host[BUF_SIZE];
   char port[BUF_SIZE];
+  memset(host, 0x0, sizeof(host));
+  memset(port, 0x0, sizeof(port));
   parse_ip_port(argv[1], host, port);
   printf("Host %s, and port %s.\n", host, port);
 
