@@ -193,6 +193,7 @@ int main(int argc, char *argv[]) {
         puts("Timeout error");
         return -1;
       }
+      puts("Timeout, resend the message");
       continue;
     } else {
       // Receive calculation protocol message
@@ -233,6 +234,7 @@ int main(int argc, char *argv[]) {
         puts("Timeout error");
         return -1;
       }
+      puts("Timeout, resend the message");
       continue;
     } else {
       // Receive result message
