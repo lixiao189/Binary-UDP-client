@@ -71,22 +71,38 @@ addrinfo *host2addr(const char *host, const char *port) {
  */
 void calculate(calcProtocol *calcProtocolMsg) {
   uint32_t arith = ntohl(calcProtocolMsg->arith);
+  printf("Assignment: ");
   if (arith == 1) {
+    printf("Add ");
     calcProtocolMsg->inResult = htonl(ntohl(calcProtocolMsg->inValue1) + ntohl(calcProtocolMsg->inValue2));
   } else if (arith == 2) {
+    printf("Sub ");
     calcProtocolMsg->inResult = htonl(ntohl(calcProtocolMsg->inValue1) - ntohl(calcProtocolMsg->inValue2));
   } else if (arith == 3) {
+    printf("Mul ");
     calcProtocolMsg->inResult = htonl(ntohl(calcProtocolMsg->inValue1) * ntohl(calcProtocolMsg->inValue2));
   } else if (arith == 4) {
+    printf("Div ");
     calcProtocolMsg->inResult = htonl(ntohl(calcProtocolMsg->inValue1) / ntohl(calcProtocolMsg->inValue2));
   } else if (arith == 5) {
+    printf("Add ");
     calcProtocolMsg->flResult = calcProtocolMsg->flValue1 + calcProtocolMsg->flValue2;
   } else if (arith == 6) {
+    printf("Sub ");
     calcProtocolMsg->flResult = calcProtocolMsg->flValue1 - calcProtocolMsg->flValue2;
   } else if (arith == 7) {
+    printf("Mul ");
     calcProtocolMsg->flResult = calcProtocolMsg->flValue1 * calcProtocolMsg->flValue2;
   } else if (arith == 8) {
+    printf("Div ");
     calcProtocolMsg->flResult = calcProtocolMsg->flValue1 / calcProtocolMsg->flValue2;
+  }
+
+  // Output the calculation
+  if (arith == 1 || arith == 2 || arith == 3 || arith == 4) {
+    printf("%d %d = %d\n", ntohl(calcProtocolMsg->inValue1), ntohl(calcProtocolMsg->inValue2), ntohl(calcProtocolMsg->inResult));
+  } else {
+    printf("%f %f = %f\n", calcProtocolMsg->flValue1, calcProtocolMsg->flValue2, calcProtocolMsg->flResult);
   }
 }
 
