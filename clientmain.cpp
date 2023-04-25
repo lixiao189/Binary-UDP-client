@@ -19,7 +19,6 @@
 
 const int SEND_TIMES = 3;
 const int BUF_SIZE = 100;
-const int LOCAL_PORT = 12345; // Local listening port
 
 /**
  * @brief Parse host:port like string
@@ -109,10 +108,16 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-#ifdef DEBUG
+  // Create UDP socket
+  int sock = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol);
+  if (sock < 0) {
+    printf("Socket creation error\n");
+    return -1;
+  }
+
   int tmp_sock;
-  struct sockaddr_storage addr;
-  socklen_t addrlen = sizeof(addr);
+  struct sockaddr_storage local_addr;
+  socklen_t local_addrlen = sizeof(local_addr);
 
   if ((tmp_sock = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol)) < 0) {
     printf("Socket creation error\n");
@@ -125,7 +130,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  if (getsockname(tmp_sock, (struct sockaddr *)&addr, &addrlen) < 0) {
+  if (getsockname(tmp_sock, (struct sockaddr *)&local_addr, &local_addrlen) < 0) {
     perror("getsockname error");
     exit(EXIT_FAILURE);
   }
@@ -133,37 +138,26 @@ int main(int argc, char *argv[]) {
   char local_ipstr[INET6_ADDRSTRLEN];
   int local_port;
 
-  if (addr.ss_family == AF_INET) {
-    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+  if (local_addr.ss_family == AF_INET) {
+    struct sockaddr_in *s = (struct sockaddr_in *)&local_addr;
     local_port = ntohs(s->sin_port);
     inet_ntop(AF_INET, &s->sin_addr, local_ipstr, sizeof(local_ipstr));
   } else {
-    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&addr;
+    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&local_addr;
     local_port = ntohs(s->sin6_port);
     inet_ntop(AF_INET6, &s->sin6_addr, local_ipstr, sizeof(local_ipstr));
   }
 
+#ifdef DEBUG
   printf("Connected to  %s:%s local %s:%d\n", host, port, local_ipstr, local_port);
-
-  close(tmp_sock);
 #endif
 
-  // Create UDP socket
-  int sock = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol);
-  if (sock < 0) {
-    printf("Socket creation error\n");
-    return -1;
-  }
+  close(tmp_sock); // Release the trail socket
 
-  // Bind the local address
-  struct sockaddr_in local_addr;
-  local_addr.sin_family = serv_addr->ai_family;
-  local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  local_addr.sin_port = htons(LOCAL_PORT);
-
-  if (bind(sock, (struct sockaddr *)&local_addr, sizeof(local_addr)) == -1) {
-    puts("Bind error");
-    return -1;
+  // Bind local address
+  if (bind(sock, (sockaddr *)&local_addr, local_addrlen) == -1) {
+    perror("bind error");
+    exit(EXIT_FAILURE);
   }
 
   // Set up fd sets
